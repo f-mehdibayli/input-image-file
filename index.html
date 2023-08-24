@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./style.css" />
+    <title>Image Insert</title>
+  </head>
+
+  <body>
+    <form class="container">
+      <div class="image-add">
+        <div>
+          <div class="input-text">
+            <div>
+              <label for="file-selector">Yükləmək üçün şəkil seçin</label>
+              <input type="file" id="file-selector" accept="image/*" />
+            </div>
+            <p>Hazırda yükləmək üçün seçilmiş heç bir şəkil yoxdur...</p>
+          </div>
+        </div>
+        <div>
+          <img src="./images/light-gray.png" id="preview" alt="Preview Image" />
+        </div>
+      </div>
+       <!-- <input type="submit" value="Göndər" /> --> 
+    </form>
+    <script>
+      const form = document.querySelector("form");
+      const fileSelector = document.getElementById("file-selector");
+      const previewImage = document.getElementById("preview");
+      const text = document.querySelector("p");
+
+      let imageFile;
+
+      fileSelector.addEventListener("change", (event) => {
+        const fileList = event.target.files;
+        imageFile = fileList[0];
+        // console.log(fileList);
+
+        if (fileList.length === 0) {
+          text.textContent =
+            "Hazırda yükləmək üçün seçilmiş heç bir şəkil yoxdur...";
+            previewImage.src = "/images/light-gray.png"
+        } else if (imageFile && imageFile.size < 524288) {
+          const previewURL = URL.createObjectURL(imageFile);
+          text.textContent = `Şəklin adı ${
+            imageFile.name
+          }, şəkil ölçüsü ${returnFileSize(imageFile.size)}`;
+          previewImage.src = previewURL;
+          previewImage.style.opacity = 0;
+          setTimeout(() => {
+            previewImage.style.opacity = 1;
+          }, 300);
+        } else {
+          alert("Şəklin ölçüsü 0,5 MB'dan büyükdür!");
+        }
+      });
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        console.log("imageFile.size2:" + imageFile.size);
+
+        if (imageFile && imageFile.size < 524288) {
+          const previewURL = URL.createObjectURL(imageFile);
+
+          const response = await fetch(previewURL);
+          const blob = await response.blob();
+
+          const formData = new FormData();
+          formData.append("image", blob, imageFile.name);
+          await fetch("/images/upload.php", {
+            method: "POST",
+            body: formData,
+          });
+
+          URL.revokeObjectURL(previewURL);
+        }
+      });
+
+      function returnFileSize(number) {
+        if (number < 1024) {
+          return `${number} bytes`;
+        } else if (number >= 1024 && number < 1048576) {
+          return `${(number / 1024).toFixed(1)} KB`;
+        } else if (number >= 1048576) {
+          return `${(number / 1048576).toFixed(1)} MB`;
+        }
+      }
+    </script>
+  </body>
+</html>
